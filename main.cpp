@@ -42,6 +42,7 @@ enum
     OPT_DEST,
     OPT_FULLPATH,
     OPT_LOWERCASE,
+    OPT_FILEFLAGS,
 };
 
 
@@ -65,7 +66,8 @@ const CSimpleOpt::SOption COMMAND_LINE_OPTIONS[] = {
     { OPT_FULLPATH,         "--fullpath",       SO_NONE    },
     { OPT_LOWERCASE,        "-c",               SO_NONE    },
     { OPT_LOWERCASE,        "--lowercase",      SO_NONE    },
-    
+    { OPT_FILEFLAGS,        "--filterflags",    SO_REQ_SEP },
+
     SO_END_OF_OPTIONS
 };
 
@@ -108,7 +110,17 @@ void showUsage(const std::string& strApplicationName)
          << "                             specified with a comma (e.g. -p wow-update-13164.MPQ,base)" << endl
          << "    --prefix <PREFIX>        Path prefix to apply to all patches which do not specify their " << endl
          << "                             own explicit prefix" << endl
-         << "    --lowercase, -c:         Convert extracted file paths to lowercase" <<endl
+         << "    --lowercase, -c:         Convert extracted file paths to lowercase" << endl
+         << "    --filterflags <FLAGS>:   Filter found files by their file flags. Useful to skip deleted files." << endl
+         << "                             0x00000100 - MPQ_FILE_IMPLODE: File is compressed using PKWARE Data compression library" << endl
+         << "                             0x00000200 - MPQ_FILE_COMPRESS: File is compressed using combination of compression methods" << endl
+         << "                             0x00010000 - MPQ_FILE_ENCRYPTED: The file is encrypted" << endl
+         << "                             0x00020000 - MPQ_FILE_FIX_KEY: The decryption key for the file is altered" << endl
+         << "                             0x00100000 - MPQ_FILE_PATCH_FILE: The file contains incremental patch for an existing file" << endl
+         << "                             0x01000000 - MPQ_FILE_SINGLE_UNIT: The file is not divided into blocks, but stored as single unit" << endl
+         << "                             0x02000000 - MPQ_FILE_DELETE_MARKER: Delete files present in lower-priority archives in the search chain" << endl
+         << "                             0x04000000 - MPQ_FILE_SECTOR_CRC: File has checksums for each sector" << endl
+         << "                             0x80000000 - MPQ_FILE_EXISTS: Set if file exists, reset when the file was deleted" << endl
          << endl
          << "Examples:" << endl
          << endl
@@ -137,6 +149,31 @@ void showUsage(const std::string& strApplicationName)
          << endl;
 }
 
+string formatFileFlags(int flags)
+{
+    string out = "";
+
+    // MPQ_FILE_EXISTS
+    out += (flags & 0x80000000) ? "E" : "-";
+    // MPQ_FILE_SECTOR_CRC
+    out += (flags & 0x04000000) ? "S" : "-";
+    // MPQ_FILE_DELETE_MARKER
+    out += (flags & 0x02000000) ? "D" : "-";
+    // MPQ_FILE_SINGLE_UNIT
+    out += (flags & 0x01000000) ? "U" : "-";
+    // MPQ_FILE_PATCH_FILE
+    out += (flags & 0x00100000) ? "P" : "-";
+    // MPQ_FILE_FIX_KEY
+    out += (flags & 0x00020000) ? "F" : "-";
+    // MPQ_FILE_ENCRYPTED
+    out += (flags & 0x00010000) ? "E" : "-";
+    // MPQ_FILE_COMPRESS
+    out += (flags & 0x00000200) ? "C" : "-";
+    // MPQ_FILE_IMPLODE
+    out += (flags & 0x00000100) ? "I" : "-";
+
+    return out;
+}
 
 int main(int argc, char** argv)
 {
@@ -151,6 +188,7 @@ int main(int argc, char** argv)
     bool bExtraction = false;
     bool bUseFullPath = false;
     bool bLowerCase = false;
+    int iFileFlags = 0x0;
 
 
     // Parse the command-line parameters
@@ -210,6 +248,9 @@ int main(int argc, char** argv)
 
                 case OPT_LOWERCASE:
                     bLowerCase = true;
+                    break;
+                case OPT_FILEFLAGS:
+                    iFileFlags = strtol(args.OptionArg(), NULL, 0);
                     break;
             }
         }
@@ -315,7 +356,10 @@ int main(int argc, char** argv)
                 cout << "Found files:" << endl;
 
                 do {
-                    cout << "  - " << findData.cFileName << endl;
+                    if (iFileFlags && (findData.dwFileFlags & iFileFlags) != 0)
+                         continue;
+
+                    cout << "  | " << formatFileFlags(findData.dwFileFlags) << " | " << findData.cFileName << endl;
 
                     tSearchResult r;
                     r.strFileName = findData.szPlainName;
