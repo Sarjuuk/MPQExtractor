@@ -66,7 +66,7 @@ const CSimpleOpt::SOption COMMAND_LINE_OPTIONS[] = {
     { OPT_FULLPATH,         "--fullpath",       SO_NONE    },
     { OPT_LOWERCASE,        "-c",               SO_NONE    },
     { OPT_LOWERCASE,        "--lowercase",      SO_NONE    },
-    { OPT_FILEFLAGS,        "--filterflags",    SO_REQ_SEP },
+    { OPT_FILEFLAGS,        "--excludeflags",   SO_REQ_SEP },
 
     SO_END_OF_OPTIONS
 };
@@ -111,16 +111,16 @@ void showUsage(const std::string& strApplicationName)
          << "    --prefix <PREFIX>        Path prefix to apply to all patches which do not specify their " << endl
          << "                             own explicit prefix" << endl
          << "    --lowercase, -c:         Convert extracted file paths to lowercase" << endl
-         << "    --filterflags <FLAGS>:   Filter found files by their file flags. Useful to skip deleted files." << endl
-         << "                             0x00000100 - MPQ_FILE_IMPLODE: File is compressed using PKWARE Data compression library" << endl
-         << "                             0x00000200 - MPQ_FILE_COMPRESS: File is compressed using combination of compression methods" << endl
-         << "                             0x00010000 - MPQ_FILE_ENCRYPTED: The file is encrypted" << endl
-         << "                             0x00020000 - MPQ_FILE_FIX_KEY: The decryption key for the file is altered" << endl
-         << "                             0x00100000 - MPQ_FILE_PATCH_FILE: The file contains incremental patch for an existing file" << endl
-         << "                             0x01000000 - MPQ_FILE_SINGLE_UNIT: The file is not divided into blocks, but stored as single unit" << endl
-         << "                             0x02000000 - MPQ_FILE_DELETE_MARKER: Delete files present in lower-priority archives in the search chain" << endl
-         << "                             0x04000000 - MPQ_FILE_SECTOR_CRC: File has checksums for each sector" << endl
-         << "                             0x80000000 - MPQ_FILE_EXISTS: Set if file exists, reset when the file was deleted" << endl
+         << "    --excludeflags <FLAGS>:  Filter found files by their file flags. Useful to exclude deleted files." << endl
+         << "                             0x00000100 I: MPQ_FILE_IMPLODE: File is compressed using PKWARE Data compression library" << endl
+         << "                             0x00000200 C: MPQ_FILE_COMPRESS: File is compressed using combination of compression methods" << endl
+         << "                             0x00010000 E: MPQ_FILE_ENCRYPTED: The file is encrypted" << endl
+         << "                             0x00020000 F: MPQ_FILE_FIX_KEY: The decryption key for the file is altered" << endl
+         << "                             0x00100000 P: MPQ_FILE_PATCH_FILE: The file contains incremental patch for an existing file" << endl
+         << "                             0x01000000 U: MPQ_FILE_SINGLE_UNIT: The file is not divided into blocks, but stored as single unit" << endl
+         << "                             0x02000000 D: MPQ_FILE_DELETE_MARKER: Delete files present in lower-priority archives in the search chain" << endl
+         << "                             0x04000000 S: MPQ_FILE_SECTOR_CRC: File has checksums for each sector" << endl
+         << "                             0x80000000 E: MPQ_FILE_EXISTS: Set if file exists, reset when the file was deleted" << endl
          << endl
          << "Examples:" << endl
          << endl
